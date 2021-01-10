@@ -10,9 +10,23 @@
 
 **************************************************************************************/
 
+#include "FAB_LED.h"
 #include <LiquidCrystal.h>
 
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);           // select the pins used on the LCD panel
+
+
+// Declare the LED protocol and the port
+ws2812b<D,2>  strip;
+const uint8_t numPixels = 4;
+const uint8_t maxBrightness = 128;
+grb  pixels[numPixels] = {};
+
+void setPIX(char n, uint8_t r, uint8_t g, uint8_t b) {
+  pixels[n].r = r;
+  pixels[n].g = g;
+  pixels[n].b = b;
+}
 
 // define some values used by the panel and buttons
 int lcd_key     = 0;
@@ -56,13 +70,21 @@ int read_LCD_buttons(){               // read the buttons
 void setup() {
    lcd.begin(16, 2);               // start the library
    lcd.setCursor(0,0);             // set the LCD cursor   position 
-   lcd.print("100lat Jurek!");     // print a simple message on the LCD
+   lcd.print("Wpisz kod!");     // print a simple message on the LCD
+
+   strip.clear(2 * numPixels);
+   pixels[0].r = maxBrightness;
+   pixels[1].g = maxBrightness;
+   pixels[2].b = maxBrightness;
 }
 
 uint16_t c = 10;
 int poprzedni = btnNONE;
 
 void loop() {
+  strip.sendPixels(numPixels, pixels);
+  setPIX(3,0,0,((millis()/1000) & 1) ? 0 : maxBrightness);
+  
    lcd.setCursor(9,1);             // move cursor to second line "1" and 9 spaces over
 //   lcd.print(millis()/1000);       // display seconds elapsed since power-up
    lcd.print(c);       // display seconds elapsed since power-up
@@ -76,10 +98,12 @@ void loop() {
 
        case btnRIGHT:{             //  push button "RIGHT" and show the word on the screen
             lcd.print("RIGHT ");
+            setPIX(0,maxBrightness,0,0);
             break;
        }
        case btnLEFT:{
              lcd.print("LEFT   "); //  push button "LEFT" and show the word on the screen
+            setPIX(0,0,maxBrightness,0);
              break;
        }    
        case btnUP:{
@@ -100,7 +124,9 @@ void loop() {
        }
        case btnNONE:{
              lcd.print("NONE  ");  //  No action  will show "None" on the screen
-             break;
+          for(int o=0; o<numPixels-1; o++) {
+            setPIX(o,0,0,0);
+          }
        }
    }
 
